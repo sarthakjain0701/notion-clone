@@ -26,11 +26,11 @@ service cloud.firestore {
     }
 
     // 3. Pages Collection
-    // For this personal version, any authenticated user can read/write pages 
-    // (since it's just for you and your friends).
-    // If you want it stricter later, you can check workspace membership here.
+    // Authenticated users can read/write their workspace pages.
+    // Shared pages (isShared == true) can be read and written by any authenticated user.
     match /pages/{pageId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
   }
 }

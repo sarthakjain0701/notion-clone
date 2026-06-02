@@ -50,7 +50,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         onSearchOpen={() => setCommandPaletteOpen(true)}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <Header pageId={pageId} />
+        <Header 
+          pageId={pageId} 
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
         <div className="flex-1 overflow-hidden">
           {children}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
@@ -22,6 +22,7 @@ import { common, createLowlight } from 'lowlight';
 import { EditorToolbar } from './EditorToolbar';
 import { BubbleToolbar } from './BubbleToolbar';
 import { SlashCommandMenu } from './SlashCommandMenu';
+import { CodeBlockComponent } from './CodeBlockComponent';
 import { JSONContent } from '@tiptap/react';
 
 const lowlight = createLowlight(common);
@@ -52,7 +53,11 @@ export function TiptapEditor({ content, onUpdate, editable = true }: TiptapEdito
       TaskItem.configure({
         nested: true,
       }),
-      CodeBlockLowlight.configure({
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockComponent);
+        },
+      }).configure({
         lowlight,
         defaultLanguage: 'javascript',
       }),
@@ -93,20 +98,21 @@ export function TiptapEditor({ content, onUpdate, editable = true }: TiptapEdito
     },
   });
 
-  // Sync external content changes
-  const updateContent = useCallback(() => {
-    if (editor && content && !editor.isFocused) {
+  // Sync external content changes only when the content prop reference changes
+  // (which happens on external Firestore updates, not on local edits)
+  const prevContentRef = React.useRef(content);
+  useEffect(() => {
+    if (editor && content && content !== prevContentRef.current) {
+      prevContentRef.current = content;
+      
       const currentContent = JSON.stringify(editor.getJSON());
       const newContent = JSON.stringify(content);
       if (currentContent !== newContent) {
+        // We preserve selection if possible, but history will be cleared on external update
         editor.commands.setContent(content);
       }
     }
   }, [editor, content]);
-
-  useEffect(() => {
-    updateContent();
-  }, [updateContent]);
 
   if (!editor) {
     return (

@@ -12,6 +12,8 @@ import {
   limit,
   Timestamp,
   writeBatch,
+  onSnapshot,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { Page, Workspace } from '@/lib/types';
@@ -56,6 +58,10 @@ export async function createPage(
     updatedAt: now,
     isFavorite: false,
     isArchived: false,
+    isShared: false,
+    sharedWith: [],
+    shareToken: null,
+    sharePermission: 'edit',
     childOrder: [],
     path,
     tags: [],
@@ -403,6 +409,65 @@ export async function getPageBreadcrumbs(
   }
 
   return breadcrumbs;
+}
+
+// ─── Sharing & Real-Time ─────────────────────────────────────────────
+
+/**
+ * Generate a share token for a page and mark it as shared
+ */
+export async function sharePage(pageId: string, permission: 'edit' | 'view' = 'edit'): Promise<string> {
+  const token = nanoid(16);
+  await updateDoc(doc(db, 'pages', pageId), {
+    isShared: true,
+    shareToken: token,
+    sharePermission: permission,
+    updatedAt: Timestamp.now(),
+  });
+  return token;
+}
+
+/**
+ * Revoke sharing for a page
+ */
+export async function unsharePage(pageId: string): Promise<void> {
+  await updateDoc(doc(db, 'pages', pageId), {
+    isShared: false,
+    shareToken: null,
+    sharedWith: [],
+    updatedAt: Timestamp.now(),
+  });
+}
+
+/**
+ * Get a page by its share token
+ */
+export async function getPageByShareToken(token: string): Promise<Page | null> {
+  const q = query(
+    collection(db, 'pages'),
+    where('shareToken', '==', token),
+    where('isShared', '==', true),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].data() as Page;
+}
+
+/**
+ * Subscribe to real-time updates for a page (onSnapshot)
+ */
+export function subscribeToPage(
+  pageId: string,
+  callback: (page: Page | null) => void
+): Unsubscribe {
+  return onSnapshot(doc(db, 'pages', pageId), (snapshot) => {
+    if (snapshot.exists()) {
+      callback(snapshot.data() as Page);
+    } else {
+      callback(null);
+    }
+  });
 }
 
 // ─── Workspace ───────────────────────────────────────────────────────

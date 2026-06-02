@@ -43,6 +43,10 @@ export interface Page {
   updatedAt: Timestamp;
   isFavorite: boolean;
   isArchived: boolean;
+  isShared: boolean;
+  sharedWith: string[];
+  shareToken: string | null;
+  sharePermission: 'edit' | 'view';
   childOrder: string[];
   path: string;
   tags: string[];

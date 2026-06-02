@@ -5,14 +5,16 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Menu } from 'lucide-react';
 import { getPageBreadcrumbs } from '@/lib/firebase/firestore';
 
 interface HeaderProps {
   pageId?: string;
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export function Header({ pageId }: HeaderProps) {
+export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{ id: string; title: string; icon: string | null }>>([]);
   const pathname = usePathname();
 
@@ -35,8 +37,16 @@ export function Header({ pageId }: HeaderProps) {
   const routeTitle = getRouteTitle();
 
   return (
-    <header className="flex items-center justify-between h-11 px-3 border-b border-[var(--border-default)] bg-[var(--bg-primary)] flex-shrink-0">
-      <div className="flex items-center gap-1 text-sm overflow-hidden">
+    <header className="flex items-center justify-between h-12 px-4 border-b border-[var(--border-default)] bg-[var(--bg-primary)] flex-shrink-0">
+      <div className="flex items-center gap-2 text-sm overflow-hidden">
+        {!sidebarOpen && onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors cursor-pointer mr-1"
+          >
+            <Menu className="w-4.5 h-4.5" />
+          </button>
+        )}
         {routeTitle ? (
           <span className="font-medium text-[var(--text-primary)]">{routeTitle}</span>
         ) : breadcrumbs.length > 0 ? (
@@ -46,7 +56,7 @@ export function Header({ pageId }: HeaderProps) {
               <Link
                 href={`/page/${crumb.id}`}
                 className={cn(
-                  'flex items-center gap-1 px-1 py-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors truncate max-w-[160px]',
+                  'flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-[var(--bg-hover)] transition-colors truncate max-w-[180px]',
                   index === breadcrumbs.length - 1 ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'
                 )}
               >
@@ -57,7 +67,7 @@ export function Header({ pageId }: HeaderProps) {
           ))
         ) : null}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
       </div>
     </header>
