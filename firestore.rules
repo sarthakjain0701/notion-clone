@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // 1. Users Collection
+    // Users can only read and write their own profile document.
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // 2. Workspaces Collection
+    // Users can create workspaces. They can read/update if they are the owner or a member.
+    match /workspaces/{workspaceId} {
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && 
+        (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.members);
+    }
+
+    // 3. Pages Collection
+    // For this personal version, any authenticated user can read/write pages 
+    // (since it's just for you and your friends).
+    // If you want it stricter later, you can check workspace membership here.
+    match /pages/{pageId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
