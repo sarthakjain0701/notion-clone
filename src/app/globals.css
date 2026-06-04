@@ -16,7 +16,7 @@
   --sidebar-collapsed-width: 0px;
 
   /* Editor */
-  --editor-max-width: 800px;
+  --editor-max-width: 900px;
 }
 
 /* ─── Light Theme ───────────────────────────────────────────────────── */
@@ -77,8 +77,8 @@
   --text-tertiary: #ffffff3d;
   --text-inverse: #191919;
 
-  --border-default: #ffffff14;
-  --border-strong: #ffffff24;
+  --border-default: #ffffff1f;
+  --border-strong: #ffffff33;
 
   --accent-primary: #529cca;
   --accent-primary-hover: #6bb0d8;

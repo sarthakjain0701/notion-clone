@@ -11,37 +11,44 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, rightIcon, className, ...props }, ref) => {
+  ({ label, error, icon, rightIcon, className, style, ...props }, ref) => {
+    // Compute padding explicitly to avoid Tailwind merge conflicts
+    const paddingStyle: React.CSSProperties = {
+      paddingLeft: icon ? '2.75rem' : '1rem',
+      paddingRight: rightIcon ? '2.75rem' : '1rem',
+      ...style,
+    };
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] pointer-events-none">
               {icon}
             </div>
           )}
           <input
             ref={ref}
+            style={paddingStyle}
             className={cn(
-              'w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] py-2.5',
-              icon ? 'pl-10' : 'pl-3.5',
-              rightIcon ? 'pr-10' : 'pr-3.5',
-              'text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
+              'w-full rounded-xl bg-[var(--bg-secondary)] py-3 text-sm',
+              'border-2 border-[var(--border-default)]',
+              'text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
               'transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent',
+              'focus:outline-none focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]',
               'hover:border-[var(--border-strong)]',
-              error && 'border-[var(--danger)] focus:ring-[var(--danger)]',
+              error && 'border-[var(--danger)] focus:border-[var(--danger)]',
               className
             )}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
               {rightIcon}
             </div>
           )}

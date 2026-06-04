@@ -189,15 +189,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Collapsed toggle button */}
-      {!isOpen && (
-        <button
-          onClick={onToggle}
-          className="fixed top-3 left-3 z-20 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-default)] shadow-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-all duration-200 cursor-pointer"
-        >
-          <ChevronsRight className="w-4 h-4" />
-        </button>
-      )}
+      {/* Sidebar reopen is handled by the hamburger Menu button in the Header */}
     </>
   );
 }

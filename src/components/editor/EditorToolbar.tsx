@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils/cn';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -33,7 +33,7 @@ function ToolbarButton({ onClick, isActive, disabled, tooltip, children }: Toolb
         onClick={(e) => { e.preventDefault(); onClick(); }}
         disabled={disabled}
         className={cn(
-          'p-2.5 rounded-xl transition-all duration-150 cursor-pointer',
+          'p-2 rounded-lg transition-all duration-100 cursor-pointer',
           'hover:bg-[var(--bg-hover)]',
           'disabled:opacity-30 disabled:cursor-not-allowed',
           isActive && 'bg-[var(--accent-bg)] text-[var(--accent-primary)]',
@@ -47,7 +47,7 @@ function ToolbarButton({ onClick, isActive, disabled, tooltip, children }: Toolb
 }
 
 function Separator() {
-  return <div className="w-px h-6 bg-[var(--border-default)] mx-1.5" />;
+  return <div className="w-px h-5 bg-[var(--border-default)] mx-2" />;
 }
 
 // Dropdown menu for grouping toolbar actions
@@ -78,7 +78,7 @@ function ToolbarDropdown({
       <button
         onClick={(e) => { e.preventDefault(); setOpen(!open); }}
         className={cn(
-          'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer',
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-100 cursor-pointer',
           'hover:bg-[var(--bg-hover)]',
           isActive
             ? 'bg-[var(--accent-bg)] text-[var(--accent-primary)]'
@@ -110,7 +110,7 @@ function DropdownButton({
   closeMenu,
 }: {
   onClick: () => void;
-  isActive?: boolean;
+  isActive: boolean;
   icon: React.ReactNode;
   label: string;
   shortcut?: string;
@@ -124,9 +124,10 @@ function DropdownButton({
         closeMenu?.();
       }}
       className={cn(
-        'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer',
+        'w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors cursor-pointer',
         'hover:bg-[var(--bg-hover)]',
-        isActive && 'text-[var(--accent-primary)] bg-[var(--accent-bg)]'
+        isActive && 'text-[var(--accent-primary)] bg-[var(--accent-bg)]',
+        !isActive && 'text-[var(--text-primary)]'
       )}
     >
       <span className="text-[var(--text-secondary)]">{icon}</span>
@@ -145,6 +146,15 @@ function DropdownSep() {
 }
 
 export function EditorToolbar({ editor }: EditorToolbarProps) {
+  // Force re-render on every editor transaction so active states update instantly
+  const [, setForceUpdate] = useState(0);
+  
+  useEffect(() => {
+    const handler = () => setForceUpdate(n => n + 1);
+    editor.on('transaction', handler);
+    return () => { editor.off('transaction', handler); };
+  }, [editor]);
+
   const addImage = () => {
     const url = window.prompt('Enter image URL:');
     if (url) {
@@ -176,7 +186,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10 flex-wrap">
+    <div className="flex items-center gap-0.5 px-4 py-2 border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10 flex-wrap">
       {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -286,7 +296,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <Separator />
 
-      {/* Lists Dropdown */}
+      {/* Lists dropdown */}
       <ToolbarDropdown
         trigger={
           <span className="flex items-center gap-1.5">
@@ -316,7 +326,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         />
       </ToolbarDropdown>
 
-      {/* Alignment Dropdown */}
+      {/* Align dropdown */}
       <ToolbarDropdown
         trigger={
           <span className="flex items-center gap-1.5">
@@ -345,7 +355,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         />
       </ToolbarDropdown>
 
-      {/* Insert Dropdown */}
+      {/* Insert dropdown */}
       <ToolbarDropdown
         trigger={
           <span className="flex items-center gap-1.5">
@@ -353,7 +363,6 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
             Insert
           </span>
         }
-        isActive={editor.isActive('blockquote') || editor.isActive('codeBlock')}
       >
         <DropdownButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -370,16 +379,19 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         <DropdownSep />
         <DropdownButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          isActive={false}
           icon={<Minus className="w-4 h-4" />}
           label="Divider"
         />
         <DropdownButton
           onClick={addTable}
+          isActive={false}
           icon={<Table className="w-4 h-4" />}
           label="Table"
         />
         <DropdownButton
           onClick={addImage}
+          isActive={false}
           icon={<ImageIcon className="w-4 h-4" />}
           label="Image"
         />
