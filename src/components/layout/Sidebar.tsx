@@ -98,7 +98,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
                   {user?.email}
                 </p>
               </div>
-              <DropdownItem onClick={() => {}} icon={<Settings className="w-4 h-4" />}>
+              <DropdownItem onClick={() => router.push('/settings')} icon={<Settings className="w-4 h-4" />}>
                 Settings
               </DropdownItem>
               <DropdownSeparator />
@@ -166,7 +166,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
           </div>
 
           {/* Archive link */}
-          <div className="px-2 py-1 border-t border-[var(--border-default)]">
+          <div className="px-2 py-2 border-t border-[var(--border-default)]">
             <button
               onClick={() => router.push('/archive')}
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
@@ -177,14 +177,16 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
           </div>
 
           {/* Bottom bar */}
-          <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--border-default)]">
-            <div className="flex items-center gap-2">
-              <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
-              <span className="text-xs text-[var(--text-secondary)] truncate max-w-[120px]">
-                {user?.displayName}
-              </span>
+          <div style={{ padding: '12px 12px', borderTop: '1px solid var(--border-default)' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
+                <span className="text-xs text-[var(--text-secondary)] truncate max-w-[120px]">
+                  {user?.displayName}
+                </span>
+              </div>
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </aside>

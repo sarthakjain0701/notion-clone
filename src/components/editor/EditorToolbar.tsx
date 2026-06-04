@@ -32,8 +32,9 @@ function ToolbarButton({ onClick, isActive, disabled, tooltip, children }: Toolb
       <button
         onClick={(e) => { e.preventDefault(); onClick(); }}
         disabled={disabled}
+        style={{ padding: '8px', marginInline: '1px' }}
         className={cn(
-          'p-2 rounded-lg transition-all duration-100 cursor-pointer',
+          'rounded-lg transition-all duration-100 cursor-pointer',
           'hover:bg-[var(--bg-hover)]',
           'disabled:opacity-30 disabled:cursor-not-allowed',
           isActive && 'bg-[var(--accent-bg)] text-[var(--accent-primary)]',
@@ -47,7 +48,7 @@ function ToolbarButton({ onClick, isActive, disabled, tooltip, children }: Toolb
 }
 
 function Separator() {
-  return <div className="w-px h-5 bg-[var(--border-default)] mx-3" />;
+  return <div style={{ width: '1px', height: '20px', marginInline: '14px', background: 'var(--border-default)' }} />;
 }
 
 // Dropdown menu for grouping toolbar actions
@@ -186,7 +187,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10 flex-wrap">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '10px 16px', flexWrap: 'wrap' as const }} className="border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10">
       {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}

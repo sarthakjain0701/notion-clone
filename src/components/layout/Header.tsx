@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronRight, Menu } from 'lucide-react';
-import { getPageBreadcrumbs } from '@/lib/firebase/firestore';
+import { getPageBreadcrumbs, subscribeToPage } from '@/lib/firebase/firestore';
 
 interface HeaderProps {
   pageId?: string;
@@ -18,6 +18,7 @@ export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderPr
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{ id: string; title: string; icon: string | null }>>([]);
   const pathname = usePathname();
 
+  // Fetch breadcrumbs initially
   useEffect(() => {
     if (pageId) {
       getPageBreadcrumbs(pageId).then(setBreadcrumbs).catch(() => {});
@@ -26,11 +27,30 @@ export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderPr
     }
   }, [pageId]);
 
+  // Subscribe to real-time updates so title changes reflect immediately
+  useEffect(() => {
+    if (!pageId) return;
+
+    const unsubscribe = subscribeToPage(pageId, (updatedPage) => {
+      if (!updatedPage) return;
+      setBreadcrumbs((prev) =>
+        prev.map((crumb) =>
+          crumb.id === pageId
+            ? { ...crumb, title: updatedPage.title, icon: updatedPage.icon }
+            : crumb
+        )
+      );
+    });
+
+    return () => unsubscribe();
+  }, [pageId]);
+
   const getRouteTitle = () => {
     if (pathname === '/dashboard') return 'Home';
     if (pathname === '/favorites') return 'Favorites';
     if (pathname === '/archive') return 'Archive';
     if (pathname === '/search') return 'Search';
+    if (pathname === '/settings') return 'Settings';
     return null;
   };
 

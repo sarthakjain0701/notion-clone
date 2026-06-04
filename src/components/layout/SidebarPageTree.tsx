@@ -128,7 +128,6 @@ interface TreeNodeProps {
 
 function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isActive = pathname === `/page/${node.id}`;
@@ -191,12 +190,10 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
     <div>
       <div
         className={cn(
-          'group flex items-center gap-0.5 px-1 py-0.5 rounded-md cursor-pointer transition-colors',
+          'group flex items-center gap-0.5 px-1 py-1 rounded-md cursor-pointer transition-colors',
           isActive ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'
         )}
         style={{ paddingLeft: `${depth * 12 + 4}px` }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         onClick={() => router.push(`/page/${node.id}`)}
       >
         {/* Expand/Collapse toggle */}
@@ -232,43 +229,40 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
           {node.title || 'Untitled'}
         </span>
 
-        {/* Actions (visible on hover) */}
-        {isHovered && (
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Dropdown
-              trigger={
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="p-0.5 rounded hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] cursor-pointer"
-                >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                </button>
-              }
-              align="right"
-            >
-              <DropdownItem onClick={handleToggleFavorite} icon={<Star className="w-4 h-4" />}>
-                {node.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              </DropdownItem>
-              <DropdownItem onClick={handleDuplicate} icon={<Copy className="w-4 h-4" />}>
-                Duplicate
-              </DropdownItem>
-              <DropdownItem onClick={handleArchive} icon={<Archive className="w-4 h-4" />}>
-                Archive
-              </DropdownItem>
-              <DropdownSeparator />
-              <DropdownItem onClick={handleDelete} icon={<Trash2 className="w-4 h-4" />} danger>
-                Delete
-              </DropdownItem>
-            </Dropdown>
+        {/* Actions — always visible, slightly transparent until hovered */}
+        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity">
+          <Dropdown
+            trigger={
+              <button
+                className="p-1 rounded hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] cursor-pointer"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            }
+            align="right"
+          >
+            <DropdownItem onClick={handleToggleFavorite} icon={<Star className="w-4 h-4" />}>
+              {node.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            </DropdownItem>
+            <DropdownItem onClick={handleDuplicate} icon={<Copy className="w-4 h-4" />}>
+              Duplicate
+            </DropdownItem>
+            <DropdownItem onClick={handleArchive} icon={<Archive className="w-4 h-4" />}>
+              Archive
+            </DropdownItem>
+            <DropdownSeparator />
+            <DropdownItem onClick={handleDelete} icon={<Trash2 className="w-4 h-4" />} danger>
+              Delete
+            </DropdownItem>
+          </Dropdown>
 
-            <button
-              onClick={handleAddChild}
-              className="p-0.5 rounded hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+          <button
+            onClick={handleAddChild}
+            className="p-1 rounded hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Children */}

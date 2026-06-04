@@ -24,9 +24,19 @@ export function Dropdown({ trigger, children, align = 'left', className }: Dropd
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div ref={ref} className="relative inline-block">
-      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+      <div
+        onClick={handleTriggerClick}
+        onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setIsOpen(!isOpen); }}
+        className="cursor-pointer"
+      >
         {trigger}
       </div>
       {isOpen && (
