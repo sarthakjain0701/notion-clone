@@ -47,7 +47,7 @@ function ToolbarButton({ onClick, isActive, disabled, tooltip, children }: Toolb
 }
 
 function Separator() {
-  return <div className="w-px h-5 bg-[var(--border-default)] mx-2" />;
+  return <div className="w-px h-5 bg-[var(--border-default)] mx-3" />;
 }
 
 // Dropdown menu for grouping toolbar actions
@@ -186,7 +186,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-0.5 px-4 py-2 border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10 flex-wrap">
+    <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[var(--border-default)] bg-[var(--bg-primary)] sticky top-0 z-10 flex-wrap">
       {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
