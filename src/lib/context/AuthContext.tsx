@@ -38,9 +38,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setFirebaseUser(fbUser);
 
         // Fetch user profile from Firestore
-        const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+        let userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+        
+        // Handle race condition during sign up: Firebase Auth triggers this listener 
+        // immediately, often before our signUp function finishes writing the Firestore doc.
+        if (!userDoc.exists()) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+        }
+
         if (userDoc.exists()) {
           setUser(userDoc.data() as UserProfile);
+        } else {
+          // Fallback if doc still doesn't exist
+          console.error("User document not found after retry");
         }
 
         // Fetch or create workspace

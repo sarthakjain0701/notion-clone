@@ -28,13 +28,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={cn(
-              'w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] px-3.5 py-2.5',
+              'w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] py-2.5',
+              icon ? 'pl-10' : 'pl-3.5',
+              rightIcon ? 'pr-10' : 'pr-3.5',
               'text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
               'transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent',
               'hover:border-[var(--border-strong)]',
-              icon && 'pl-10',
-              rightIcon && 'pr-10',
               error && 'border-[var(--danger)] focus:ring-[var(--danger)]',
               className
             )}
