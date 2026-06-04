@@ -9,7 +9,7 @@ import {
   ChevronRight, Plus, MoreHorizontal, Copy, Trash2, Star,
   Archive, FileText,
 } from 'lucide-react';
-import { getAllPages, createPage, deletePage, toggleFavorite, archivePage, duplicatePage } from '@/lib/firebase/firestore';
+import { subscribeToWorkspacePages, createPage, deletePage, toggleFavorite, archivePage, duplicatePage } from '@/lib/firebase/firestore';
 import type { Page, PageTreeItem } from '@/lib/types';
 import toast from 'react-hot-toast';
 
@@ -60,28 +60,20 @@ export function SidebarPageTree() {
   const [pages, setPages] = useState<PageTreeItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPages = useCallback(async () => {
+  useEffect(() => {
     if (!workspace) return;
-    try {
-      const allPages = await getAllPages(workspace.id);
+
+    setLoading(true);
+    const unsubscribe = subscribeToWorkspacePages(workspace.id, (allPages) => {
       const tree = buildTree(allPages);
       setPages(tree);
-    } catch {
-      console.error('Failed to fetch pages');
-    } finally {
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, [workspace]);
 
-  useEffect(() => {
-    fetchPages();
-  }, [fetchPages]);
-
-  // Listen for page changes (simple polling for MVP)
-  useEffect(() => {
-    const interval = setInterval(fetchPages, 5000);
-    return () => clearInterval(interval);
-  }, [fetchPages]);
+  // We no longer need fetchPages or polling since we use onSnapshot
 
   if (loading) {
     return (
@@ -109,7 +101,6 @@ export function SidebarPageTree() {
           key={page.id}
           node={page}
           depth={0}
-          onRefresh={fetchPages}
           userId={user?.uid || ''}
           workspaceId={workspace?.id || ''}
         />
@@ -121,12 +112,11 @@ export function SidebarPageTree() {
 interface TreeNodeProps {
   node: PageTreeItem;
   depth: number;
-  onRefresh: () => void;
   userId: string;
   workspaceId: string;
 }
 
-function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps) {
+function TreeNode({ node, depth, userId, workspaceId }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -137,7 +127,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
     try {
       const page = await createPage(workspaceId, userId, node.id, 'Untitled');
       setIsExpanded(true);
-      onRefresh();
       router.push(`/page/${page.id}`);
       toast.success('Sub-page created');
     } catch {
@@ -148,7 +137,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
   const handleDelete = async () => {
     try {
       await deletePage(node.id);
-      onRefresh();
       toast.success('Page deleted');
       if (isActive) router.push('/dashboard');
     } catch {
@@ -159,7 +147,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
   const handleDuplicate = async () => {
     try {
       await duplicatePage(node.id, userId);
-      onRefresh();
       toast.success('Page duplicated');
     } catch {
       toast.error('Failed to duplicate page');
@@ -169,7 +156,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
   const handleToggleFavorite = async () => {
     try {
       await toggleFavorite(node.id);
-      onRefresh();
     } catch {
       toast.error('Failed to update favorite');
     }
@@ -178,7 +164,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
   const handleArchive = async () => {
     try {
       await archivePage(node.id);
-      onRefresh();
       toast.success('Page archived');
       if (isActive) router.push('/dashboard');
     } catch {
@@ -273,7 +258,6 @@ function TreeNode({ node, depth, onRefresh, userId, workspaceId }: TreeNodeProps
               key={child.id}
               node={child}
               depth={depth + 1}
-              onRefresh={onRefresh}
               userId={userId}
               workspaceId={workspaceId}
             />

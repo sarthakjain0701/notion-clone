@@ -470,6 +470,25 @@ export function subscribeToPage(
   });
 }
 
+/**
+ * Subscribe to real-time updates for all pages in a workspace
+ */
+export function subscribeToWorkspacePages(
+  workspaceId: string,
+  callback: (pages: Page[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, 'pages'),
+    where('workspaceId', '==', workspaceId),
+    where('isArchived', '==', false)
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const pages = snapshot.docs.map((doc) => doc.data() as Page);
+    callback(pages);
+  });
+}
+
 // ─── Workspace ───────────────────────────────────────────────────────
 
 /**
