@@ -99,6 +99,7 @@ export function TiptapEditor({ content, onUpdate, editable = true }: TiptapEdito
       ],
     },
     editable,
+    autofocus: 'start',
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onUpdate(editor.getJSON());
