@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronRight, Menu } from 'lucide-react';
 import { getPageBreadcrumbs, subscribeToPage } from '@/lib/firebase/firestore';
 
@@ -46,7 +45,6 @@ export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderPr
   }, [pageId]);
 
   const getRouteTitle = () => {
-    if (pathname === '/dashboard') return 'Home';
     if (pathname === '/favorites') return 'Favorites';
     if (pathname === '/archive') return 'Archive';
     if (pathname === '/search') return 'Search';
@@ -62,9 +60,10 @@ export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderPr
         {!sidebarOpen && onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors cursor-pointer mr-1"
+            style={{ padding: '8px', marginLeft: '4px', marginRight: '8px' }}
+            className="rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors cursor-pointer"
           >
-            <Menu className="w-4.5 h-4.5" />
+            <Menu style={{ width: '18px', height: '18px' }} />
           </button>
         )}
         {routeTitle ? (
@@ -88,7 +87,7 @@ export function Header({ pageId, sidebarOpen = true, onToggleSidebar }: HeaderPr
         ) : null}
       </div>
       <div className="flex items-center gap-2">
-        <ThemeToggle />
+        {/* Intentionally left empty for future top-right actions (like share/menu) */}
       </div>
     </header>
   );

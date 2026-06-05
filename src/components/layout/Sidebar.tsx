@@ -73,9 +73,9 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
       <aside
         className={cn(
           'fixed md:relative z-40 h-screen flex flex-col',
-          'bg-[var(--bg-sidebar)] border-r border-[var(--border-default)]',
+          'bg-[var(--bg-sidebar)]',
           'transition-all duration-300 ease-in-out',
-          isOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-[260px] md:translate-x-0'
+          isOpen ? 'w-[260px] translate-x-0 border-r border-[var(--border-default)]' : 'w-0 -translate-x-[260px] md:translate-x-0'
         )}
       >
         <div className={cn('flex flex-col h-full overflow-hidden', !isOpen && 'invisible')}>
@@ -84,7 +84,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
             <Dropdown
               trigger={
                 <div className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-[var(--bg-hover)] cursor-pointer transition-colors">
-                  <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
+                  <Avatar name={user?.displayName || 'User'} size="xs" src={user?.photoURL} />
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-semibold text-[var(--text-primary)] truncate max-w-[130px] leading-tight">
                       {user?.displayName || 'User'}&apos;s Notion
@@ -97,10 +97,10 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
               {/* User info inside dropdown */}
               <div className="px-3 py-2.5 border-b border-[var(--border-default)]">
                 <div className="flex items-center gap-2.5">
-                  <Avatar name={user?.displayName || 'User'} size="md" src={user?.photoURL} />
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{user?.displayName}</p>
-                    <p className="text-xs text-[var(--text-tertiary)] truncate">{user?.email}</p>
+                  <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
+                  <div className="flex flex-col -space-y-0.5">
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate leading-tight">{user?.displayName}</p>
+                    <p className="text-xs text-[var(--text-tertiary)] truncate leading-tight">{user?.email}</p>
                   </div>
                 </div>
               </div>

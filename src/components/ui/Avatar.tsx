@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils/cn';
 interface AvatarProps {
   src?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }
 
@@ -29,7 +29,8 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
       className={cn(
         'rounded-full flex items-center justify-center overflow-hidden flex-shrink-0',
         !src && colors[colorIndex],
-        size === 'sm' && 'w-6 h-6 text-[10px]',
+        size === 'xs' && 'w-3.5 h-3.5 text-[6px] tracking-tighter',
+        size === 'sm' && 'w-6 h-6 text-[9px] tracking-tight',
         size === 'md' && 'w-8 h-8 text-xs',
         size === 'lg' && 'w-10 h-10 text-sm',
         className
