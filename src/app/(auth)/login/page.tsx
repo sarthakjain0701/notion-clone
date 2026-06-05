@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -14,8 +14,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const router = useRouter();
+
+  // Redirect to dashboard once auth state confirms user is logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +35,7 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       toast.success('Welcome back!');
-      router.push('/dashboard');
+      // Redirect is handled by the useEffect watching auth state
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       if (message.includes('user-not-found') || message.includes('wrong-password') || message.includes('invalid-credential')) {

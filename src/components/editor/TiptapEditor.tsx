@@ -143,7 +143,9 @@ export function TiptapEditor({ content, onUpdate, editable = true }: TiptapEdito
       <EditorToolbar editor={editor} />
       <BubbleToolbar editor={editor} />
       <SlashCommandMenu editor={editor} />
-      <EditorContent editor={editor} />
+      <div style={{ paddingTop: '16px' }}>
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }
