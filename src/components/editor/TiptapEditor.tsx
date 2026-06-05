@@ -85,7 +85,19 @@ export function TiptapEditor({ content, onUpdate, editable = true }: TiptapEdito
       TableCell,
       TableHeader,
     ],
-    content: content || undefined,
+    // For new pages (null content), start with a Heading 1 block
+    // so the first thing the user types becomes the page heading.
+    // When they press Enter, Tiptap auto-converts to paragraph.
+    content: content || {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [],
+        },
+      ],
+    },
     editable,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {

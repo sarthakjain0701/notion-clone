@@ -10,7 +10,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
 import {
   Search, Star, Plus, Archive, Settings, LogOut,
-  ChevronsLeft, ChevronsRight, Home, ChevronDown,
+  ChevronsLeft, Home, ChevronDown, SquarePen,
 } from 'lucide-react';
 import { createPage } from '@/lib/firebase/firestore';
 import toast from 'react-hot-toast';
@@ -79,24 +79,30 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
         )}
       >
         <div className={cn('flex flex-col h-full overflow-hidden', !isOpen && 'invisible')}>
-          {/* Workspace header */}
+          {/* Workspace header — now includes avatar + user info */}
           <div className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--border-default)]">
             <Dropdown
               trigger={
                 <div className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-[var(--bg-hover)] cursor-pointer transition-colors">
-                  <Avatar name={workspace?.name || 'Workspace'} size="sm" />
-                  <span className="text-sm font-semibold text-[var(--text-primary)] truncate max-w-[140px]">
-                    {workspace?.name || 'Workspace'}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-[var(--text-tertiary)]" />
+                  <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-semibold text-[var(--text-primary)] truncate max-w-[130px] leading-tight">
+                      {user?.displayName || 'User'}&apos;s Notion
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-[var(--text-tertiary)] flex-shrink-0" />
                 </div>
               }
             >
-              <div className="px-3 py-2 border-b border-[var(--border-default)]">
-                <p className="text-xs text-[var(--text-tertiary)]">Signed in as</p>
-                <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                  {user?.email}
-                </p>
+              {/* User info inside dropdown */}
+              <div className="px-3 py-2.5 border-b border-[var(--border-default)]">
+                <div className="flex items-center gap-2.5">
+                  <Avatar name={user?.displayName || 'User'} size="md" src={user?.photoURL} />
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{user?.displayName}</p>
+                    <p className="text-xs text-[var(--text-tertiary)] truncate">{user?.email}</p>
+                  </div>
+                </div>
               </div>
               <DropdownItem onClick={() => router.push('/settings')} icon={<Settings className="w-4 h-4" />}>
                 Settings
@@ -176,16 +182,28 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
             </button>
           </div>
 
-          {/* Bottom bar */}
-          <div style={{ padding: '12px 12px', borderTop: '1px solid var(--border-default)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Avatar name={user?.displayName || 'User'} size="sm" src={user?.photoURL} />
-                <span className="text-xs text-[var(--text-secondary)] truncate max-w-[120px]">
-                  {user?.displayName}
-                </span>
+          {/* Bottom bar — "New page" button like Notion's "New chat" + theme toggle */}
+          <div style={{ padding: '12px', borderTop: '1px solid var(--border-default)' }}>
+            <div className="flex items-center justify-between w-full">
+              <button
+                onClick={handleNewPage}
+                disabled={isCreating}
+                className="w-[150px] flex items-center justify-center gap-2 h-9 rounded-full border border-[var(--border-default)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:opacity-80 transition-all cursor-pointer"
+              >
+                <SquarePen className="w-4 h-4" />
+                <span>New page</span>
+              </button>
+              
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => router.push('/settings')}
+                  className="w-9 h-9 rounded-full border border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:opacity-80 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer flex items-center justify-center"
+                  aria-label="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <ThemeToggle />
               </div>
-              <ThemeToggle />
             </div>
           </div>
         </div>

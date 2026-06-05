@@ -12,7 +12,7 @@ export function ThemeToggle() {
     <Tooltip content={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
       <button
         onClick={toggleTheme}
-        className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer"
+        className="w-9 h-9 rounded-full border border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:opacity-80 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer flex items-center justify-center"
         aria-label="Toggle theme"
       >
         {theme === 'dark' ? (
