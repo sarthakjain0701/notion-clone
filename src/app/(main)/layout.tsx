@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { FullPageSpinner } from '@/components/ui/Spinner';
+import { TabManager } from '@/components/pages/TabManager';
 import { useRouter } from 'next/navigation';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   // Get page ID from route params
   const pageId = pathname.startsWith('/page/') ? (params.id as string) : undefined;
+  const isPageRoute = pathname.startsWith('/page/');
 
   // Ctrl+K shortcut
   useEffect(() => {
@@ -55,8 +57,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
-        <div className="flex-1 overflow-hidden">
-          {children}
+        <div className="flex-1 overflow-hidden relative">
+          <TabManager />
+          {!isPageRoute && children}
         </div>
       </main>
       <CommandPalette

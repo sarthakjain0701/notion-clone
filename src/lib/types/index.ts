@@ -43,6 +43,7 @@ export interface Page {
   updatedAt: Timestamp;
   isFavorite: boolean;
   isArchived: boolean;
+  inArchive?: boolean;
   isShared: boolean;
   sharedWith: string[];
   shareToken: string | null;
@@ -60,6 +61,7 @@ export interface PageTreeItem {
   childOrder: string[];
   isFavorite: boolean;
   isArchived: boolean;
+  inArchive?: boolean;
   children: PageTreeItem[];
   isExpanded?: boolean;
 }

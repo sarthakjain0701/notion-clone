@@ -58,6 +58,7 @@ export async function createPage(
     updatedAt: now,
     isFavorite: false,
     isArchived: false,
+    inArchive: false,
     isShared: false,
     sharedWith: [],
     shareToken: null,
@@ -207,23 +208,103 @@ export async function toggleFavorite(pageId: string): Promise<boolean> {
 }
 
 /**
- * Archive a page
+ * Move a page to trash (and its children recursively)
  */
-export async function archivePage(pageId: string): Promise<void> {
-  await updateDoc(doc(db, 'pages', pageId), {
+export async function moveToTrash(pageId: string): Promise<void> {
+  const batch = writeBatch(db);
+
+  async function archiveChildren(parentId: string) {
+    const childrenQuery = query(
+      collection(db, 'pages'),
+      where('parentId', '==', parentId)
+    );
+    const snapshot = await getDocs(childrenQuery);
+    for (const childDoc of snapshot.docs) {
+      await archiveChildren(childDoc.id);
+      batch.update(doc(db, 'pages', childDoc.id), {
+        isArchived: true,
+        updatedAt: Timestamp.now(),
+      });
+    }
+  }
+
+  await archiveChildren(pageId);
+  batch.update(doc(db, 'pages', pageId), {
     isArchived: true,
+    updatedAt: Timestamp.now(),
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Restore a page from trash
+ */
+export async function restoreFromTrash(pageId: string): Promise<void> {
+  await updateDoc(doc(db, 'pages', pageId), {
+    isArchived: false,
     updatedAt: Timestamp.now(),
   });
 }
 
 /**
- * Restore a page from archive
+ * Move a page to archive (and its children recursively)
  */
-export async function restorePage(pageId: string): Promise<void> {
-  await updateDoc(doc(db, 'pages', pageId), {
-    isArchived: false,
+export async function archivePage(pageId: string): Promise<void> {
+  const batch = writeBatch(db);
+
+  async function archiveChildren(parentId: string) {
+    const childrenQuery = query(
+      collection(db, 'pages'),
+      where('parentId', '==', parentId)
+    );
+    const snapshot = await getDocs(childrenQuery);
+    for (const childDoc of snapshot.docs) {
+      await archiveChildren(childDoc.id);
+      batch.update(doc(db, 'pages', childDoc.id), {
+        inArchive: true,
+        updatedAt: Timestamp.now(),
+      });
+    }
+  }
+
+  await archiveChildren(pageId);
+  batch.update(doc(db, 'pages', pageId), {
+    inArchive: true,
     updatedAt: Timestamp.now(),
   });
+
+  await batch.commit();
+}
+
+/**
+ * Unarchive a page
+ */
+export async function unarchivePage(pageId: string): Promise<void> {
+  const batch = writeBatch(db);
+
+  async function unarchiveChildren(parentId: string) {
+    const childrenQuery = query(
+      collection(db, 'pages'),
+      where('parentId', '==', parentId)
+    );
+    const snapshot = await getDocs(childrenQuery);
+    for (const childDoc of snapshot.docs) {
+      await unarchiveChildren(childDoc.id);
+      batch.update(doc(db, 'pages', childDoc.id), {
+        inArchive: false,
+        updatedAt: Timestamp.now(),
+      });
+    }
+  }
+
+  await unarchiveChildren(pageId);
+  batch.update(doc(db, 'pages', pageId), {
+    inArchive: false,
+    updatedAt: Timestamp.now(),
+  });
+
+  await batch.commit();
 }
 
 /**
@@ -292,7 +373,7 @@ export async function getRootPages(workspaceId: string): Promise<Page[]> {
     orderBy('updatedAt', 'desc')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  return snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
 }
 
 /**
@@ -305,7 +386,7 @@ export async function getChildPages(parentId: string): Promise<Page[]> {
     where('isArchived', '==', false)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  return snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
 }
 
 /**
@@ -318,7 +399,7 @@ export async function getAllPages(workspaceId: string): Promise<Page[]> {
     where('isArchived', '==', false)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  return snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
 }
 
 /**
@@ -336,7 +417,7 @@ export async function getRecentPages(
     limit(count)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  return snapshot.docs.map((doc) => doc.data() as Page).filter((p) => !p.inArchive);
 }
 
 /**
@@ -351,21 +432,61 @@ export async function getFavoritePages(workspaceId: string): Promise<Page[]> {
     orderBy('updatedAt', 'desc')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  return snapshot.docs.map((doc) => doc.data() as Page).filter((p) => !p.inArchive);
 }
 
-/**
- * Get archived pages
- */
-export async function getArchivedPages(workspaceId: string): Promise<Page[]> {
+export async function getTrashedPages(workspaceId: string): Promise<Page[]> {
   const q = query(
     collection(db, 'pages'),
     where('workspaceId', '==', workspaceId),
-    where('isArchived', '==', true),
-    orderBy('updatedAt', 'desc')
+    where('isArchived', '==', true)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as Page);
+  const pages = snapshot.docs.map((doc) => doc.data() as Page);
+  return pages.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+}
+
+export function subscribeToTrashedPages(
+  workspaceId: string,
+  callback: (pages: Page[]) => void
+) {
+  const q = query(
+    collection(db, 'pages'),
+    where('workspaceId', '==', workspaceId),
+    where('isArchived', '==', true)
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const pages = snapshot.docs.map((doc) => doc.data() as Page);
+    const sortedPages = pages.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+    callback(sortedPages);
+  });
+}
+
+export function subscribeToArchivedPages(
+  workspaceId: string,
+  callback: (pages: Page[]) => void
+) {
+  const q = query(
+    collection(db, 'pages'),
+    where('workspaceId', '==', workspaceId),
+    where('inArchive', '==', true)
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const pages = snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.isArchived); // Exclude trashed pages
+    const sortedPages = pages.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+    callback(sortedPages);
+  });
+}
+
+/**
+ * Empty the trash (permanently delete all trashed pages)
+ */
+export async function emptyTrash(workspaceId: string): Promise<void> {
+  const trashedPages = await getTrashedPages(workspaceId);
+  // deletePage handles recursive deletion and batching internally
+  await Promise.all(trashedPages.map(page => deletePage(page.id)));
 }
 
 /**
@@ -384,12 +505,14 @@ export async function searchPages(
   const allPages = snapshot.docs.map((doc) => doc.data() as Page);
 
   const lowerQuery = searchQuery.toLowerCase();
-  return allPages.filter((page) => {
-    const titleMatch = page.title.toLowerCase().includes(lowerQuery);
-    const contentText = extractTextFromContent(page.content as Record<string, unknown> | null);
-    const contentMatch = contentText.toLowerCase().includes(lowerQuery);
-    return titleMatch || contentMatch;
-  });
+  return allPages
+    .filter((page) => !page.inArchive)
+    .filter((page) => {
+      const titleMatch = page.title.toLowerCase().includes(lowerQuery);
+      const contentText = extractTextFromContent(page.content as Record<string, unknown> | null);
+      const contentMatch = contentText.toLowerCase().includes(lowerQuery);
+      return titleMatch || contentMatch;
+    });
 }
 
 /**
@@ -484,7 +607,7 @@ export function subscribeToWorkspacePages(
   );
   
   return onSnapshot(q, (snapshot) => {
-    const pages = snapshot.docs.map((doc) => doc.data() as Page);
+    const pages = snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
     callback(pages);
   });
 }

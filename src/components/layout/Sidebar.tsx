@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useTabs } from '@/lib/context/TabContext';
 import { cn } from '@/lib/utils/cn';
 import { SidebarPageTree } from './SidebarPageTree';
 import { Avatar } from '@/components/ui/Avatar';
@@ -10,7 +11,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
 import {
   Search, Star, Plus, Archive, Settings, LogOut,
-  ChevronsLeft, Home, ChevronDown, SquarePen,
+  ChevronsLeft, Home, ChevronDown, SquarePen, Trash2
 } from 'lucide-react';
 import { createPage } from '@/lib/firebase/firestore';
 import toast from 'react-hot-toast';
@@ -23,6 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
   const { user, workspace, signOut } = useAuth();
+  const { openTab } = useTabs();
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
 
@@ -31,7 +33,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
     setIsCreating(true);
     try {
       const page = await createPage(workspace.id, user.uid, null, 'Untitled');
-      router.push(`/page/${page.id}`);
+      openTab(page.id, 'Untitled', null);
       toast.success('Page created');
     } catch {
       toast.error('Failed to create page');
@@ -121,8 +123,8 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
             </button>
           </div>
 
-          {/* Quick actions */}
-          <div className="px-2 py-2 space-y-0.5">
+          {/* Quick actions & Favorites */}
+          <div className="px-2 py-2">
             <button
               onClick={onSearchOpen}
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
@@ -133,7 +135,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
                 ⌘K
               </span>
             </button>
-
+            <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
             <button
               onClick={() => router.push('/dashboard')}
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
@@ -141,10 +143,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
               <Home className="w-4 h-4" />
               <span>Home</span>
             </button>
-          </div>
-
-          {/* Favorites */}
-          <div className="px-2 py-1">
+            <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
             <button
               onClick={() => router.push('/favorites')}
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
@@ -152,6 +151,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
               <Star className="w-4 h-4" />
               <span>Favorites</span>
             </button>
+            <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
           </div>
 
           {/* Page tree */}
@@ -171,7 +171,7 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
             <SidebarPageTree />
           </div>
 
-          {/* Archive link */}
+          {/* Archive & Trash links */}
           <div className="px-2 py-2 border-t border-[var(--border-default)]">
             <button
               onClick={() => router.push('/archive')}
@@ -179,6 +179,14 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
             >
               <Archive className="w-4 h-4" />
               <span>Archive</span>
+            </button>
+            <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
+            <button
+              onClick={() => router.push('/trash')}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Trash</span>
             </button>
           </div>
 

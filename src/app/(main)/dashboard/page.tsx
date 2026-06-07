@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useTabs } from '@/lib/context/TabContext';
 import { subscribeToWorkspacePages, createPage } from '@/lib/firebase/firestore';
 import { Spinner } from '@/components/ui/Spinner';
 import { formatRelativeTime } from '@/lib/utils/helpers';
 import { Plus, Clock, Star, FileText, Sparkles } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import type { Page } from '@/lib/types';
 import toast from 'react-hot-toast';
 
@@ -78,9 +77,11 @@ function NewPageCard({ onClick }: { onClick: () => void }) {
 
 /* ── Document Card ───────────────────────────────── */
 function DocCard({ page }: { page: Page }) {
+  const { openTab } = useTabs();
+  
   return (
-    <Link
-      href={`/page/${page.id}`}
+    <button
+      onClick={() => openTab(page.id, page.title, page.icon)}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -91,9 +92,10 @@ function DocCard({ page }: { page: Page }) {
         background: 'var(--bg-elevated)',
         overflow: 'hidden',
         transition: 'all 0.3s ease',
-        textDecoration: 'none',
+        cursor: 'pointer',
         color: 'inherit',
         position: 'relative',
+        textAlign: 'left',
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget;
@@ -117,6 +119,7 @@ function DocCard({ page }: { page: Page }) {
           justifyContent: 'center',
           background: 'var(--bg-secondary)',
           position: 'relative',
+          width: '100%',
         }}
       >
         <span style={{ fontSize: '42px', lineHeight: 1, transition: 'transform 0.3s ease' }}>
@@ -138,8 +141,9 @@ function DocCard({ page }: { page: Page }) {
       {/* Info footer */}
       <div
         style={{
-          padding: '14px 16px',
+          padding: '14px 20px',
           borderTop: '1px solid var(--border-default)',
+          width: '100%',
         }}
       >
         <h3
@@ -168,14 +172,14 @@ function DocCard({ page }: { page: Page }) {
           </span>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }
 
 /* ── Dashboard Page ──────────────────────────────── */
 export default function DashboardPage() {
   const { user, workspace } = useAuth();
-  const router = useRouter();
+  const { openTab } = useTabs();
   const [recentPages, setRecentPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -198,7 +202,7 @@ export default function DashboardPage() {
     if (!workspace || !user) return;
     try {
       const page = await createPage(workspace.id, user.uid, null, 'Untitled');
-      router.push(`/page/${page.id}`);
+      openTab(page.id, 'Untitled', null);
     } catch {
       toast.error('Failed to create page');
     }

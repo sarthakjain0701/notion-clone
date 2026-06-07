@@ -2,20 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
-import { subscribeToArchivedPages, unarchivePage } from '@/lib/firebase/firestore';
+import { subscribeToTrashedPages, restoreFromTrash, deletePage, emptyTrash } from '@/lib/firebase/firestore';
 import { Spinner } from '@/components/ui/Spinner';
-import { Archive, RotateCcw } from 'lucide-react';
+import { Trash2, RotateCcw } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils/helpers';
 import type { Page } from '@/lib/types';
 import toast from 'react-hot-toast';
 
-/* ── Archive Document Card ─────────────────────────── */
-function ArchiveDocCard({
+/* ── Trash Document Card ─────────────────────────── */
+function TrashDocCard({
   page,
-  onUnarchive,
+  onRestore,
+  onDelete,
 }: {
   page: Page;
-  onUnarchive: () => void;
+  onRestore: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div
@@ -37,9 +39,9 @@ function ArchiveDocCard({
           {page.title || 'Untitled'}
         </h3>
         <div className="flex items-center gap-1.5">
-          <Archive className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
+          <Trash2 className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
           <span className="text-xs text-[var(--text-tertiary)] truncate">
-            Archived {formatRelativeTime(page.updatedAt)}
+            Deleted {formatRelativeTime(page.updatedAt)}
           </span>
         </div>
       </div>
@@ -50,29 +52,38 @@ function ArchiveDocCard({
         style={{ padding: '24px', gap: '8px' }}
       >
         <button
-          onClick={(e) => { e.stopPropagation(); onUnarchive(); }}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold transition-all active:scale-95 cursor-pointer border-none"
-          style={{ padding: '12px 24px' }}
+          onClick={(e) => { e.stopPropagation(); onRestore(); }}
+          className="flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold transition-all active:scale-95 cursor-pointer border-none"
+          style={{ padding: '12px 8px' }}
         >
           <RotateCcw className="w-4 h-4 text-emerald-400" />
-          <span>Unarchive</span>
+          <span>Restore</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold transition-all active:scale-95 cursor-pointer border-none"
+          style={{ padding: '12px 8px' }}
+        >
+          <Trash2 className="w-4 h-4 text-rose-400" />
+          <span>Delete</span>
         </button>
       </div>
     </div>
   );
 }
 
-/* ── Archive Page ──────────────────────────────────── */
-export default function ArchivePage() {
+/* ── Trash Page ──────────────────────────────────── */
+export default function TrashPage() {
   const { workspace } = useAuth();
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEmptying, setIsEmptying] = useState(false);
 
   useEffect(() => {
     if (!workspace) return;
     
     setLoading(true);
-    const unsubscribe = subscribeToArchivedPages(workspace.id, (p) => {
+    const unsubscribe = subscribeToTrashedPages(workspace.id, (p) => {
       setPages(p);
       setLoading(false);
     });
@@ -80,11 +91,34 @@ export default function ArchivePage() {
     return () => unsubscribe();
   }, [workspace]);
 
-  const handleUnarchive = async (pageId: string) => {
+  const handleRestore = async (pageId: string) => {
     try {
-      await unarchivePage(pageId);
-      toast.success('Page unarchived');
-    } catch { toast.error('Failed to unarchive'); }
+      await restoreFromTrash(pageId);
+      toast.success('Page restored');
+    } catch { toast.error('Failed to restore'); }
+  };
+
+  const handleDelete = async (pageId: string) => {
+    if (!confirm('Permanently delete this page?')) return;
+    try {
+      await deletePage(pageId);
+      toast.success('Page permanently deleted');
+    } catch { toast.error('Failed to delete'); }
+  };
+
+  const handleEmptyTrash = async () => {
+    if (!workspace) return;
+    if (!confirm('Are you sure you want to permanently delete all items in the trash? This action cannot be undone.')) return;
+    
+    setIsEmptying(true);
+    try {
+      await emptyTrash(workspace.id);
+      toast.success('Trash emptied');
+    } catch {
+      toast.error('Failed to empty trash');
+    } finally {
+      setIsEmptying(false);
+    }
   };
 
   if (loading) {
@@ -125,17 +159,50 @@ export default function ArchivePage() {
                 marginBottom: '4px',
               }}
             >
-              <Archive style={{ width: '28px', height: '28px', color: 'var(--accent-primary)' }} />
-              <span>Archive</span>
+              <Trash2 style={{ width: '28px', height: '28px', color: 'var(--danger)' }} />
+              <span>Trash</span>
             </h1>
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Hidden pages that are safely stored away from your workspace.
+              Restore pages or permanently delete them from the workspace.
             </p>
           </div>
+          {pages.length > 0 && (
+            <button
+              onClick={handleEmptyTrash}
+              disabled={isEmptying}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 18px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-default)',
+                background: 'transparent',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--danger)';
+                e.currentTarget.style.color = 'var(--danger)';
+                e.currentTarget.style.background = 'var(--danger-bg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>{isEmptying ? 'Emptying...' : 'Empty Trash'}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Grid of Archived Pages */}
+      {/* Grid of Trashed Pages */}
       <div
         style={{
           maxWidth: '900px',
@@ -169,13 +236,13 @@ export default function ArchivePage() {
                 marginBottom: '16px',
               }}
             >
-              <Archive style={{ width: '28px', height: '28px', color: 'var(--text-tertiary)' }} />
+              <Trash2 style={{ width: '28px', height: '28px', color: 'var(--text-tertiary)' }} />
             </div>
             <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
-              Archive is empty
+              Trash is empty
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', textAlign: 'center', maxWidth: '300px' }}>
-              Pages you archive will appear here. They won't clutter your workspace but can be restored anytime.
+              Deleted pages will show up here. You can restore them at any time.
             </p>
           </div>
         ) : (
@@ -187,10 +254,11 @@ export default function ArchivePage() {
             }}
           >
             {pages.map((page) => (
-              <ArchiveDocCard
+              <TrashDocCard
                 key={page.id}
                 page={page}
-                onUnarchive={() => handleUnarchive(page.id)}
+                onRestore={() => handleRestore(page.id)}
+                onDelete={() => handleDelete(page.id)}
               />
             ))}
           </div>

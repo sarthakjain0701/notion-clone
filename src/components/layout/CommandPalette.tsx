@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useTabs } from '@/lib/context/TabContext';
 import { cn } from '@/lib/utils/cn';
 import { Search, FileText, X } from 'lucide-react';
 import { searchPages, getRecentPages } from '@/lib/firebase/firestore';
@@ -21,6 +22,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { workspace } = useAuth();
+  const { openTab } = useTabs();
   const router = useRouter();
 
   useEffect(() => {
@@ -67,7 +69,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(i => (i + 1) % results.length); return; }
     if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(i => (i - 1 + results.length) % results.length); return; }
     if (e.key === 'Enter' && results[selectedIndex]) {
-      router.push(`/page/${results[selectedIndex].id}`);
+      const page = results[selectedIndex];
+      openTab(page.id, page.title, page.icon);
       onClose();
     }
   };
@@ -107,7 +110,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               {results.map((page, index) => (
                 <button
                   key={page.id}
-                  onClick={() => { router.push(`/page/${page.id}`); onClose(); }}
+                  onClick={() => { openTab(page.id, page.title, page.icon); onClose(); }}
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors cursor-pointer',
                     index === selectedIndex ? 'bg-[var(--bg-hover)]' : 'hover:bg-[var(--bg-hover)]'

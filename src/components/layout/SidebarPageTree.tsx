@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useTabs } from '@/lib/context/TabContext';
 import { cn } from '@/lib/utils/cn';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
 import {
   ChevronRight, Plus, MoreHorizontal, Copy, Trash2, Star,
   Archive, FileText,
 } from 'lucide-react';
-import { subscribeToWorkspacePages, createPage, deletePage, toggleFavorite, archivePage, duplicatePage } from '@/lib/firebase/firestore';
+import { subscribeToWorkspacePages, createPage, moveToTrash, toggleFavorite, duplicatePage, archivePage } from '@/lib/firebase/firestore';
 import type { Page, PageTreeItem } from '@/lib/types';
 import toast from 'react-hot-toast';
 
@@ -120,14 +121,15 @@ function TreeNode({ node, depth, userId, workspaceId }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const isActive = pathname === `/page/${node.id}`;
+  const { openTab, activeTabId, closeTab } = useTabs();
+  const isActive = activeTabId === node.id;
 
   const handleAddChild = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       const page = await createPage(workspaceId, userId, node.id, 'Untitled');
       setIsExpanded(true);
-      router.push(`/page/${page.id}`);
+      openTab(page.id, 'Untitled', null);
       toast.success('Sub-page created');
     } catch {
       toast.error('Failed to create page');
@@ -136,11 +138,11 @@ function TreeNode({ node, depth, userId, workspaceId }: TreeNodeProps) {
 
   const handleDelete = async () => {
     try {
-      await deletePage(node.id);
-      toast.success('Page deleted');
-      if (isActive) router.push('/dashboard');
+      await moveToTrash(node.id);
+      toast.success('Page moved to trash');
+      closeTab(node.id);
     } catch {
-      toast.error('Failed to delete page');
+      toast.error('Failed to move page to trash');
     }
   };
 
@@ -165,7 +167,7 @@ function TreeNode({ node, depth, userId, workspaceId }: TreeNodeProps) {
     try {
       await archivePage(node.id);
       toast.success('Page archived');
-      if (isActive) router.push('/dashboard');
+      closeTab(node.id);
     } catch {
       toast.error('Failed to archive page');
     }
@@ -179,7 +181,7 @@ function TreeNode({ node, depth, userId, workspaceId }: TreeNodeProps) {
           isActive ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'
         )}
         style={{ paddingLeft: `${depth * 12 + 4}px` }}
-        onClick={() => router.push(`/page/${node.id}`)}
+        onClick={() => openTab(node.id, node.title, node.icon)}
       >
         {/* Expand/Collapse toggle */}
         <button

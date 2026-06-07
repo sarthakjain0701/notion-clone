@@ -48,7 +48,10 @@ export function Dropdown({ trigger, children, align = 'left', className }: Dropd
             align === 'right' ? 'right-0' : 'left-0',
             className
           )}
-          onClick={() => setIsOpen(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(false);
+          }}
         >
           {children}
         </div>
@@ -66,9 +69,14 @@ interface DropdownItemProps {
 }
 
 export function DropdownItem({ children, onClick, icon, danger, disabled }: DropdownItemProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClick) onClick();
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       className={cn(
         'w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors text-left cursor-pointer',
