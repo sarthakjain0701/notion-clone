@@ -612,6 +612,26 @@ export function subscribeToWorkspacePages(
   });
 }
 
+/**
+ * Subscribe to real-time updates for favorite pages in a workspace
+ */
+export function subscribeToFavoritePages(
+  workspaceId: string,
+  callback: (pages: Page[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, 'pages'),
+    where('workspaceId', '==', workspaceId),
+    where('isFavorite', '==', true),
+    where('isArchived', '==', false)
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const pages = snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
+    callback(pages);
+  });
+}
+
 // ─── Workspace ───────────────────────────────────────────────────────
 
 /**
