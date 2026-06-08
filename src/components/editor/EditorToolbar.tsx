@@ -12,6 +12,7 @@ import {
   Quote, Minus, Table, Image as ImageIcon,
   Undo2, Redo2, Link as LinkIcon,
   ChevronDown, Type, Columns2,
+  Plus, Trash2
 } from 'lucide-react';
 
 interface EditorToolbarProps {
@@ -175,7 +176,16 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   const addTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    const input = window.prompt('Enter table size as "rows,cols" (e.g. 4,3 for 4 rows and 3 columns):', '3,3');
+    if (!input) return;
+    
+    const parts = input.split(',');
+    const rows = parseInt(parts[0]?.trim() || '3', 10);
+    const cols = parseInt(parts[1]?.trim() || '3', 10);
+    
+    if (!isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
+      editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run();
+    }
   };
 
   // Determine current heading label for the dropdown trigger
@@ -397,6 +407,68 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           label="Image"
         />
       </ToolbarDropdown>
+
+      {/* Table Operations - Only show if table is active */}
+      {editor.isActive('table') && (
+        <>
+          <Separator />
+          <ToolbarDropdown
+            trigger={
+              <span className="flex items-center gap-1.5 text-[var(--accent-primary)]">
+                <Table className="w-4 h-4" />
+                Table
+              </span>
+            }
+            isActive={true}
+          >
+            <DropdownButton
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              isActive={false}
+              icon={<Plus className="w-4 h-4" />}
+              label="Add Row Above"
+            />
+            <DropdownButton
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              isActive={false}
+              icon={<Plus className="w-4 h-4" />}
+              label="Add Row Below"
+            />
+            <DropdownSep />
+            <DropdownButton
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              isActive={false}
+              icon={<Plus className="w-4 h-4" />}
+              label="Add Column Left"
+            />
+            <DropdownButton
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              isActive={false}
+              icon={<Plus className="w-4 h-4" />}
+              label="Add Column Right"
+            />
+            <DropdownSep />
+            <DropdownButton
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              isActive={false}
+              icon={<Minus className="w-4 h-4" />}
+              label="Delete Row"
+            />
+            <DropdownButton
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              isActive={false}
+              icon={<Minus className="w-4 h-4" />}
+              label="Delete Column"
+            />
+            <DropdownSep />
+            <DropdownButton
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              isActive={false}
+              icon={<Trash2 className="w-4 h-4 text-rose-500" />}
+              label="Delete Table"
+            />
+          </ToolbarDropdown>
+        </>
+      )}
     </div>
   );
 }

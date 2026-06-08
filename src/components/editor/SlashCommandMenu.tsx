@@ -86,7 +86,18 @@ const commands: CommandItem[] = [
     title: 'Table',
     description: 'Add a simple table.',
     icon: <Table className="w-4 h-4" />,
-    command: (editor) => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+    command: (editor) => {
+      const input = window.prompt('Enter table size as "rows,cols" (e.g. 4,3 for 4 rows and 3 columns):', '3,3');
+      if (!input) return;
+      
+      const parts = input.split(',');
+      const rows = parseInt(parts[0]?.trim() || '3', 10);
+      const cols = parseInt(parts[1]?.trim() || '3', 10);
+      
+      if (!isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
+        editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run();
+      }
+    },
   },
   {
     title: 'Image',
