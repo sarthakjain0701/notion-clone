@@ -100,7 +100,7 @@ export default function SharedPageView() {
 
   if (notFound) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4 bg-[var(--bg-primary)]">
+      <div className="flex flex-col items-center justify-center h-full gap-4 bg-[var(--bg-primary)]">
         <div className="text-6xl">🔗</div>
         <h1 className="text-xl font-bold text-[var(--text-primary)]">Page not found</h1>
         <p className="text-sm text-[var(--text-secondary)]">
@@ -119,7 +119,7 @@ export default function SharedPageView() {
   if (!page) return null;
 
   return (
-    <div className="h-screen overflow-y-auto bg-[var(--bg-primary)]">
+    <div className="h-full overflow-y-auto bg-[var(--bg-primary)]">
       {/* Shared page banner */}
       <div className={cn(
         "sticky top-0 z-20 flex items-center justify-center gap-2 px-4 py-2 text-white text-sm shadow-sm",
