@@ -139,7 +139,7 @@ export default function SharedPageView() {
         </button>
       </div>
 
-      <div className="max-w-[800px] mx-auto px-6 py-8">
+      <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '2rem clamp(2rem, 5vw, 4rem)' }}>
         <PageHeader page={page} onUpdate={handlePageUpdate} />
         <TiptapEditor
           content={page.content}
