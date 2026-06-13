@@ -13,6 +13,8 @@ import {
   Timestamp,
   writeBatch,
   onSnapshot,
+  arrayUnion,
+  arrayRemove,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './config';
@@ -628,6 +630,47 @@ export function subscribeToFavoritePages(
   
   return onSnapshot(q, (snapshot) => {
     const pages = snapshot.docs.map((doc) => doc.data() as Page).filter(p => !p.inArchive);
+    callback(pages);
+  });
+}
+
+/**
+ * Add a user to a page's sharedWith array (idempotent)
+ */
+export async function addToSharedWith(pageId: string, userId: string): Promise<void> {
+  await updateDoc(doc(db, 'pages', pageId), {
+    sharedWith: arrayUnion(userId),
+  });
+}
+
+/**
+ * Remove a user from a page's sharedWith array
+ */
+export async function removeFromSharedWith(pageId: string, userId: string): Promise<void> {
+  await updateDoc(doc(db, 'pages', pageId), {
+    sharedWith: arrayRemove(userId),
+  });
+}
+
+/**
+ * Subscribe to real-time updates for pages shared with a specific user
+ */
+export function subscribeToSharedWithMePages(
+  userId: string,
+  callback: (pages: Page[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, 'pages'),
+    where('sharedWith', 'array-contains', userId),
+    where('isShared', '==', true),
+    where('isArchived', '==', false)
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const pages = snapshot.docs
+      .map((d) => d.data() as Page)
+      .filter((p) => !p.inArchive)
+      .sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
     callback(pages);
   });
 }

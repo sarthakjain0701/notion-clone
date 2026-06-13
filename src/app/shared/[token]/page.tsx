@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
-import { getPageByShareToken, updatePageContent, subscribeToPage } from '@/lib/firebase/firestore';
+import { getPageByShareToken, updatePageContent, subscribeToPage, addToSharedWith } from '@/lib/firebase/firestore';
 import { PageHeader } from '@/components/pages/PageHeader';
 import { TiptapEditor } from '@/components/editor/TiptapEditor';
 import { Spinner, FullPageSpinner } from '@/components/ui/Spinner';
@@ -45,6 +45,12 @@ export default function SharedPageView() {
       setPage(p);
       lastSavedRef.current = JSON.stringify(p.content);
       setLoading(false);
+
+      // Auto-register this user in the page's sharedWith list
+      // so the page appears in their "Shared with me" sidebar section
+      if (user && p.createdBy !== user.uid) {
+        addToSharedWith(p.id, user.uid).catch(() => {});
+      }
     }
     fetchSharedPage();
   }, [token, user]);

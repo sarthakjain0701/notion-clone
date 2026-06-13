@@ -11,9 +11,10 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
 import {
   Search, Star, Plus, Archive, Settings, LogOut,
-  ChevronsLeft, Home, ChevronDown, SquarePen, Trash2
+  ChevronsLeft, Home, ChevronDown, ChevronRight, SquarePen, Trash2, Users, X
 } from 'lucide-react';
-import { createPage } from '@/lib/firebase/firestore';
+import { createPage, subscribeToSharedWithMePages, removeFromSharedWith } from '@/lib/firebase/firestore';
+import type { Page } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 interface SidebarProps {
@@ -27,6 +28,8 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
   const { openTab } = useTabs();
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [sharedPages, setSharedPages] = useState<Page[]>([]);
+  const [sharedExpanded, setSharedExpanded] = useState(true);
 
   const handleNewPage = async () => {
     if (!workspace || !user || isCreating) return;
@@ -61,6 +64,28 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isOpen, onToggle]);
+
+  // Subscribe to pages shared with the current user
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = subscribeToSharedWithMePages(user.uid, (pages) => {
+      setSharedPages(pages);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleRemoveShared = async (e: React.MouseEvent, pageId: string) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      await removeFromSharedWith(pageId, user.uid);
+      toast.success('Removed from shared pages');
+    } catch {
+      toast.error('Failed to remove');
+    }
+  };
 
   return (
     <>
@@ -151,6 +176,61 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
               <Star className="w-4 h-4" />
               <span>Favorites</span>
             </button>
+
+            {/* Shared with me */}
+            {sharedPages.length > 0 && (
+              <>
+                <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
+                <button
+                  onClick={() => setSharedExpanded(!sharedExpanded)}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Shared with me</span>
+                  <span className="ml-auto text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded-full">
+                    {sharedPages.length}
+                  </span>
+                  <ChevronRight className={cn(
+                    'w-3 h-3 text-[var(--text-tertiary)] transition-transform duration-200',
+                    sharedExpanded && 'rotate-90'
+                  )} />
+                </button>
+                {sharedExpanded && (
+                  <div className="mt-0.5 space-y-0.5 animate-fade-in">
+                    {sharedPages.map((page) => (
+                      <div
+                        key={page.id}
+                        onClick={() => router.push(`/shared/${page.shareToken}`)}
+                        className="group flex items-center gap-2 px-2.5 py-1.5 ml-2 rounded-md text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+                      >
+                        <span className="text-sm flex-shrink-0 w-5 text-center">
+                          {page.icon || '📄'}
+                        </span>
+                        <span className="flex-1 truncate text-sm">
+                          {page.title || 'Untitled'}
+                        </span>
+                        <span className={cn(
+                          'text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full flex-shrink-0',
+                          page.sharePermission === 'edit'
+                            ? 'bg-blue-500/15 text-blue-500'
+                            : 'bg-amber-500/15 text-amber-500'
+                        )}>
+                          {page.sharePermission === 'edit' ? 'Edit' : 'View'}
+                        </span>
+                        <button
+                          onClick={(e) => handleRemoveShared(e, page.id)}
+                          className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
+                          title="Remove from shared"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="my-1.5 border-t border-[var(--border-default)] mx-1" />
           </div>
 
